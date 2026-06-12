@@ -1,0 +1,17 @@
+services:
+  palpitando:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/palpitando.db
+      - FOOTBALL_DATA_TOKEN=${FOOTBALL_DATA_TOKEN}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - INVITE_CODE=${INVITE_CODE:-COPA2026}
+      # defina COOKIE_SECURE=true quando o site estiver atrás de HTTPS
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+      - TZ=America/Sao_Paulo
+    volumes:
+      # o banco SQLite fica fora do container — backup = copiar essa pasta
+      - ./data:/app/data

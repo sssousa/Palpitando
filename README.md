@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚽ Palpitando — Bolão da Copa do Mundo 2026
 
-## Getting Started
+Site de bolão entre amigos para a Copa do Mundo FIFA 2026. Cada participante
+palpita no placar dos jogos que ainda não começaram; os jogos e resultados vêm
+da API gratuita do [Football-Data.org](https://www.football-data.org/).
 
-First, run the development server:
+## Regras
+
+- **Placar exato: 3 pontos** · **Resultado certo: 1 ponto** (não cumulativo).
+- Fase de grupos: vale o placar do tempo normal.
+- Mata-mata: o placar exato é avaliado ao fim da prorrogação (sem pênaltis).
+  O ponto de resultado é acertar **quem se classificou** (pênaltis contam).
+  Em palpite de placar empatado, o participante escolhe quem passa nos pênaltis.
+- Palpites podem ser feitos/alterados **até o horário de início** de cada jogo.
+- Os palpites dos outros só ficam visíveis **depois que o jogo começa**.
+- Desempate no ranking: maior número de placares exatos.
+
+## Stack
+
+Next.js 16 (React 19, App Router, TypeScript) · Tailwind CSS 4 · Prisma 6 +
+SQLite · Docker Compose. Interface em pt-BR, horários no fuso de Brasília.
+
+## Rodando localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma migrate dev   # cria o banco prisma/dev.db
+npm run dev              # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Configure o `.env` (copie de `.env.example`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variável | Descrição |
+| --- | --- |
+| `DATABASE_URL` | Caminho do SQLite (padrão `file:./dev.db`) |
+| `FOOTBALL_DATA_TOKEN` | Token da API ([registre-se grátis](https://www.football-data.org/client/register)) |
+| `SESSION_SECRET` | Segredo dos cookies de sessão (`openssl rand -hex 32`) |
+| `INVITE_CODE` | Código de convite inicial para registro |
+| `COOKIE_SECURE` | `true` quando o site estiver atrás de HTTPS |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Primeiros passos
 
-## Learn More
+1. **A primeira conta registrada vira admin automaticamente** — registre-se
+   antes de divulgar o link.
+2. No painel **Admin**, clique em **"Sincronizar agora"** para a carga inicial
+   dos 104 jogos da Copa (ou rode `npm run sync` no terminal).
+3. Compartilhe o link e o código de convite com os amigos.
 
-To learn more about Next.js, take a look at the following resources:
+A sincronização de placares roda sozinha **todos os dias às 06:00 (Brasília)**,
+depois do fim dos jogos do dia. O admin também pode sincronizar manualmente e
+corrigir placares na mão (útil se a API atrasar).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy com Docker
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+No servidor (qualquer VPS Linux com Docker, ou Windows com Docker Desktop):
 
-## Deploy on Vercel
+```bash
+git clone <seu-repositorio> palpitando
+cd palpitando
+cp .env.example .env      # edite com token e segredo reais
+docker compose up -d --build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+O site sobe em `http://servidor:3000`. O banco fica em `./data/palpitando.db`
+no host — **backup = copiar essa pasta**. Para atualizar a aplicação:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+git pull && docker compose up -d --build
+```
+
+> Para expor na internet, coloque um proxy reverso com HTTPS na frente
+> (Caddy ou nginx + certbot) e defina `COOKIE_SECURE=true` no `.env`.
+
+## Scripts úteis
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run sync` | Carga/sincronização manual com a Football-Data.org |
+| `npm run db:studio` | Abre o Prisma Studio para inspecionar o banco |
+| `npx tsx scripts/test-scoring.ts` | Roda os testes das regras de pontuação |
