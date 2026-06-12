@@ -1,0 +1,6 @@
+# O domínio vem da variável SITE_DOMAIN do .env.
+# Com um domínio real apontando para o servidor, o Caddy emite e renova
+# o certificado HTTPS (Let's Encrypt) automaticamente.
+{$SITE_DOMAIN} {
+	reverse_proxy palpitando:3000
+}

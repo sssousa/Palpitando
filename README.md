@@ -57,19 +57,26 @@ No servidor (qualquer VPS Linux com Docker, ou Windows com Docker Desktop):
 ```bash
 git clone <seu-repositorio> palpitando
 cd palpitando
-cp .env.example .env      # edite com token e segredo reais
+cp .env.example .env      # edite token, segredo e SITE_DOMAIN
 docker compose up -d --build
 ```
 
-O site sobe em `http://servidor:3000`. O banco fica em `./data/palpitando.db`
-no host — **backup = copiar essa pasta**. Para atualizar a aplicação:
+O compose sobe dois containers: o app e o **Caddy**, que faz o proxy reverso
+e emite/renova o certificado HTTPS sozinho (Let's Encrypt). Pré-requisitos:
+
+- DNS do `SITE_DOMAIN` apontando para o IP do servidor;
+- portas 80 e 443 abertas no firewall
+  (`firewall-cmd --permanent --add-service=http --add-service=https && firewall-cmd --reload`).
+
+O banco fica em `./data/palpitando.db` no host — **backup = copiar essa
+pasta**. Para atualizar a aplicação:
 
 ```bash
 git pull && docker compose up -d --build
 ```
 
-> Para expor na internet, coloque um proxy reverso com HTTPS na frente
-> (Caddy ou nginx + certbot) e defina `COOKIE_SECURE=true` no `.env`.
+> Sem domínio (acesso por IP): remova o serviço `caddy` do compose, troque a
+> porta do app para `"3000:3000"` e defina `COOKIE_SECURE=false` no `.env`.
 
 ## Scripts úteis
 

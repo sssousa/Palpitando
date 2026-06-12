@@ -3,17 +3,38 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      # só o localhost enxerga a porta — o acesso externo entra pelo Apache/nginx do cPanel
+      # só para depuração local no servidor (curl http://127.0.0.1:3000);
+      # o acesso externo entra pelo Caddy
       - "127.0.0.1:3000:3000"
     environment:
       - DATABASE_URL=file:/app/data/palpitando.db
       - FOOTBALL_DATA_TOKEN=${FOOTBALL_DATA_TOKEN}
       - SESSION_SECRET=${SESSION_SECRET}
       - INVITE_CODE=${INVITE_CODE:-COPA2026}
-      # defina COOKIE_SECURE=true quando o site estiver atrás de HTTPS
-      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+      # o Caddy serve em HTTPS, então o cookie pode ser seguro por padrão
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
       - TZ=America/Sao_Paulo
     volumes:
       # o banco SQLite fica fora do container — backup = copiar essa pasta
       # (:Z = rótulo SELinux, necessário no AlmaLinux/RHEL; ignorado onde não há SELinux)
       - ./data:/app/data:Z
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # domínio do site, definido no .env (ex.: palpitando.seudominio.com.br)
+      - SITE_DOMAIN=${SITE_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - palpitando
+
+volumes:
+  caddy_data:
+  caddy_config:
