@@ -3,7 +3,8 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # só o localhost enxerga a porta — o acesso externo entra pelo Apache/nginx do cPanel
+      - "127.0.0.1:3000:3000"
     environment:
       - DATABASE_URL=file:/app/data/palpitando.db
       - FOOTBALL_DATA_TOKEN=${FOOTBALL_DATA_TOKEN}
@@ -14,4 +15,5 @@ services:
       - TZ=America/Sao_Paulo
     volumes:
       # o banco SQLite fica fora do container — backup = copiar essa pasta
-      - ./data:/app/data
+      # (:Z = rótulo SELinux, necessário no AlmaLinux/RHEL; ignorado onde não há SELinux)
+      - ./data:/app/data:Z
