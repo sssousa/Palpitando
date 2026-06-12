@@ -15,6 +15,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build
 
+# ---- CLI do Prisma isolado, com a árvore completa de dependências ----
+# (usado pelo entrypoint para aplicar as migrações na inicialização)
+FROM node:22-alpine AS prisma-cli
+RUN apk add --no-cache openssl
+WORKDIR /prisma-cli
+RUN npm install prisma@6.19.3
+
 # ---- runtime ----
 FROM node:22-alpine AS runner
 RUN apk add --no-cache openssl
@@ -30,10 +37,7 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # CLI do Prisma para aplicar as migrações na inicialização
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
-COPY --from=builder /app/node_modules/@prisma/engines-version ./node_modules/@prisma/engines-version
-COPY --from=builder /app/node_modules/@prisma/config ./node_modules/@prisma/config
+COPY --from=prisma-cli /prisma-cli/node_modules /opt/prisma-cli/node_modules
 COPY --from=builder /app/prisma ./prisma
 
 COPY docker-entrypoint.sh ./
